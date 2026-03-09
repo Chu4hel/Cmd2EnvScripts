@@ -69,9 +69,9 @@ CACHE_PATHS = [
 
 # Пути, не привязанные к пользователям
 SYSTEM_PATHS = [
-    r"C:\Windows\LiveKernelReports",  # дампы по 3Гб
-    r"C:\$Recycle.Bin",  # Корзина (всех пользователей)
-    r"C:\Windows\Temp",  # Системный Temp
+    os.path.join(os.environ.get('SystemRoot', r'C:\Windows'), 'LiveKernelReports'),
+    os.path.join(os.environ.get('SystemDrive', 'C:') + os.sep, '$Recycle.Bin'),
+    os.path.join(os.environ.get('SystemRoot', r'C:\Windows'), 'Temp'),
 ]
 
 # Получаем пользователей
@@ -133,13 +133,18 @@ for user in users:
 # --- Системная очистка ---
 print_color("--- Запуск системной очистки ---", Colors.HEADER)
 
+import ctypes
+
+if not ctypes.windll.shell32.IsUserAnAdmin():
+    print_color("Предупреждение: Системная очистка может быть неполной без прав администратора.", Colors.WARNING)
+
 for sys_path in SYSTEM_PATHS:
     if os.path.exists(sys_path):
         print_color(f"Обработка системного пути: {sys_path}", Colors.GRAY)
         # cleanup_folder применит ваш фильтр --days к файлам внутри
         count = cleanup_folder(sys_path, days_old=args.days)
         if count > 0:
-            print_color(f"  -> Удалено объектов: {count}", Colors.OKGREEN)
+            print_color(f"  -> Удалено файлов: {count}", Colors.OKGREEN)
 
 # Если нужно принудительно очистить корзину полностью (без учета дней),
 # можно добавить вызов команды rd /s /q (но лучше придерживаться вашего фильтра по дням)
